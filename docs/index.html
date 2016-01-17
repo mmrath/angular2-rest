@@ -65,6 +65,7 @@
 	<div class="row">
 		<div class="col-8 col-content">
 			<div class="tsd-panel tsd-typography">
+				<h1 id="this-is-a-clone-of-https-github-com-paldom-angular2-rest-i-have-added-modified-the-following">This is a clone of <a href="https://github.com/Paldom/angular2-rest">https://github.com/Paldom/angular2-rest</a> I have added/modified the following</h1>
 				<h1 id="angular2-rest">angular2-rest</h1>
 				<p>Angular2 HTTP client to consume RESTful services. Built on angular2/http with TypeScript.<br><strong>Note:</strong> this solutions is not production ready, it&#39;s in a very basic alpha state. Any ideas or contributions are very welcomed :)</p>
 				<h2 id="installation">Installation</h2>
@@ -111,6 +112,23 @@
     @DELETE(<span class="hljs-string">"todo/{id}"</span>)
     <span class="hljs-keyword">public</span> deleteTodoById( @Path(<span class="hljs-string">"id"</span>) id: <span class="hljs-built_in">string</span>): Observable { <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>; };
 
+}
+</code></pre>
+				<h3 id="using-it-in-your-component">Using it in your component</h3>
+				<pre><code class="lang-ts">
+@Component({
+  selector: <span class="hljs-string">'to-do'</span>,
+  viewProviders: [TodoRESTClient],
+})
+@View({
+  templateUrl: <span class="hljs-string">'components/to-do-template.html'</span>,
+})
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">class</span> ToDoCmp {
+
+  <span class="hljs-constructor"><span class="hljs-keyword">constructor</span>(todoRESTClient: TodoRESTClient) </span>{
+  }
+
+  <span class="hljs-comment">//Use todoRESTClient   </span>
 }
 </code></pre>
 				<h2 id="api-docs">API Docs</h2>

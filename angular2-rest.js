@@ -14,19 +14,14 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 /*
-
 angular2-rest
 (c) Domonkos Pal
 License: MIT
-
 Table of Contents:
-
-- class RESTClient
-
+- class RestClient
 - Class Decorators:
     @BaseUrl(String)
     @DefaultHeaders(Object)
-
 - Method Decorators:
     @GET(url: String)
     @POST(url: String)
@@ -34,30 +29,29 @@ Table of Contents:
     @DELETE(url: String)
     @Headers(object)
     @Produces(MediaType)
-
 - Parameter Decorators:
     @Path(string)
     @Query(string)
     @Header(string)
     @Body
 */
-var core_1 = require("angular2/core");
-var http_1 = require("angular2/http");
+var core_1 = require('angular2/core');
+var http_1 = require('angular2/http');
 /**
-* Angular 2 RESTClient class.
+* Angular 2 RestClient class.
 *
-* @class RESTClient
+* @class RestClient
 * @constructor
 */
-var RESTClient = (function () {
-    function RESTClient(http) {
+var RestClient = (function () {
+    function RestClient(http) {
         this.http = http;
     }
-    RESTClient.prototype.getBaseUrl = function () {
+    RestClient.prototype.getBaseUrl = function () {
         return null;
     };
     ;
-    RESTClient.prototype.getDefaultHeaders = function () {
+    RestClient.prototype.getDefaultHeaders = function () {
         return null;
     };
     ;
@@ -67,7 +61,7 @@ var RESTClient = (function () {
     * @method requestInterceptor
     * @param {Request} req - request object
     */
-    RESTClient.prototype.requestInterceptor = function (req) {
+    RestClient.prototype.requestInterceptor = function (req) {
         //
     };
     /**
@@ -77,16 +71,16 @@ var RESTClient = (function () {
     * @param {Response} res - response object
     * @returns {Response} res - transformed response object
     */
-    RESTClient.prototype.responseInterceptor = function (res) {
+    RestClient.prototype.responseInterceptor = function (res) {
         return res;
     };
-    RESTClient = __decorate([
+    RestClient = __decorate([
         __param(0, core_1.Inject(http_1.Http)), 
         __metadata('design:paramtypes', [http_1.Http])
-    ], RESTClient);
-    return RESTClient;
+    ], RestClient);
+    return RestClient;
 })();
-exports.RESTClient = RESTClient;
+exports.RestClient = RestClient;
 /**
  * Set the base URL of REST resource
  * @param {String} url - base URL
@@ -101,7 +95,7 @@ function BaseUrl(url) {
 }
 exports.BaseUrl = BaseUrl;
 /**
- * Set default headers for every method of the RESTClient
+ * Set default headers for every method of the RestClient
  * @param {Object} headers - deafult headers in a key-value pair
  */
 function DefaultHeaders(headers) {
@@ -131,25 +125,31 @@ function paramBuilder(paramName) {
     };
 }
 /**
+ * Url for the request, type: string.
+ * This will override the value of BaseUrl
+ * @param {string} url - url path to bind value
+ */
+exports.Url = paramBuilder('Url');
+/**
  * Path variable of a method's url, type: string
  * @param {string} key - path key to bind value
  */
-exports.Path = paramBuilder("Path");
+exports.Path = paramBuilder('Path');
 /**
  * Query value of a method's url, type: string
  * @param {string} key - query key to bind value
  */
-exports.Query = paramBuilder("Query");
+exports.Query = paramBuilder('Query');
 /**
  * Body of a REST method, type: key-value pair object
  * Only one body per method!
  */
-exports.Body = paramBuilder("Body")("Body");
+exports.Body = paramBuilder('Body')('Body');
 /**
  * Custom header of a REST method, type: string
  * @param {string} key - header key to bind value
  */
-exports.Header = paramBuilder("Header");
+exports.Header = paramBuilder('Header');
 /**
  * Set custom headers for a REST method
  * @param {Object} headersDef - custom headers in a key-value pair
@@ -167,7 +167,7 @@ exports.Headers = Headers;
  */
 function Produces(producesDef) {
     return function (target, propertyKey, descriptor) {
-        descriptor.isJSON = producesDef === MediaType.JSON;
+        descriptor.mediaType = producesDef;
         return descriptor;
     };
 }
@@ -177,11 +177,13 @@ exports.Produces = Produces;
  */
 (function (MediaType) {
     MediaType[MediaType["JSON"] = 0] = "JSON";
+    MediaType[MediaType["RAW"] = 1] = "RAW"; // No transalation
 })(exports.MediaType || (exports.MediaType = {}));
 var MediaType = exports.MediaType;
 function methodBuilder(method) {
     return function (url) {
         return function (target, propertyKey, descriptor) {
+            var pUrl = target[(propertyKey + "_Url_parameters")];
             var pPath = target[(propertyKey + "_Path_parameters")];
             var pQuery = target[(propertyKey + "_Query_parameters")];
             var pBody = target[(propertyKey + "_Body_parameters")];
@@ -197,11 +199,14 @@ function methodBuilder(method) {
                     body = JSON.stringify(args[pBody[0].parameterIndex]);
                 }
                 // Path
-                var resUrl = url;
+                var resUrl = '';
+                if (typeof url === 'string') {
+                    resUrl = url;
+                }
                 if (pPath) {
                     for (var k in pPath) {
                         if (pPath.hasOwnProperty(k)) {
-                            resUrl = resUrl.replace("{" + pPath[k].key + "}", args[pPath[k].parameterIndex]);
+                            resUrl = resUrl.replace('{' + pPath[k].key + '}', args[pPath[k].parameterIndex]);
                         }
                     }
                 }
@@ -237,10 +242,17 @@ function methodBuilder(method) {
                         }
                     }
                 }
+                var overrideUrl = null;
+                if (pUrl) {
+                    overrideUrl = args[pUrl[0].parameterIndex] + resUrl;
+                }
+                else {
+                    overrideUrl = this.getBaseUrl() + resUrl;
+                }
                 // Request options
                 var options = new http_1.RequestOptions({
                     method: method,
-                    url: this.getBaseUrl() + resUrl,
+                    url: overrideUrl,
                     headers: headers,
                     body: body,
                     search: search
@@ -251,7 +263,7 @@ function methodBuilder(method) {
                 // make the request and store the observable for later transformation
                 var observable = this.http.request(req);
                 // transform the obserable in accordance to the @Produces decorator
-                if (descriptor.isJSON) {
+                if (typeof descriptor.mediaType === 'undefined' || descriptor.mediaType === MediaType.JSON) {
                     observable = observable.map(function (res) { return res.json(); });
                 }
                 // intercept the response

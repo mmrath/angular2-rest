@@ -2,6 +2,12 @@
 Angular2 HTTP client to consume RESTful services. Built on angular2/http with TypeScript.  
 **Note:** this solutions is not production ready, it's in a very basic alpha state. Any ideas or contributions are very welcomed :)
 
+## Copied from https://github.com/Paldom/angular2-rest and the following modified/added
+* Changed name from RESTClient to RestClient
+* Changed URL for method decorations (GET, PUT, POST, DELETE, HEAD) optional
+* New decorator Url added to parameters, this will replace the BaseUrl
+* JSON response is default, for non JSON use @Produces(MediaType.RAW)
+
 ## Installation
 
 ```sh
@@ -31,7 +37,7 @@ export class TodoRESTClient extends RESTClient {
             req.headers.append('jwt', SessionFactory.getInstance().credentials.jwt);
         }
     }
-    
+
     protected requestInterceptor(req: Response) {
         // do sg with responses
     }
@@ -70,7 +76,7 @@ export class ToDoCmp {
 
   constructor(todoRESTClient: TodoRESTClient) {
   }
-  
+
   //Use todoRESTClient   
 }
 
